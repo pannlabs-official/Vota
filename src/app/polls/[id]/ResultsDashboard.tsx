@@ -39,20 +39,20 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
   }
 
   // Calculate top class times
-  const timeCounts = votes.reduce((acc, vote) => {
+  const timeCounts: Record<string, number> = votes.reduce((acc: Record<string, number>, vote) => {
     const timeStr = new Date(vote.startTime).getTime().toString()
     acc[timeStr] = (acc[timeStr] || 0) + 1
     return acc
-  }, {} as Record<string, number>)
+  }, {})
 
   const sortedTimes = Object.entries(timeCounts)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => (b[1] as number) - (a[1] as number))
     .map(([timeStr, count]) => ({
       time: new Date(Number(timeStr)),
-      count
+      count: count as number
     }))
     
-  const maxCount = sortedTimes.length > 0 ? sortedTimes[0].count : 0
+  const maxCount = sortedTimes.length > 0 ? (sortedTimes[0].count as number) : 0
   const topTimes = sortedTimes.slice(0, 5)
 
   return (
