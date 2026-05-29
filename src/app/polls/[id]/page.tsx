@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import PollTabs from "./PollTabs"
 import ShareButton from "@/components/ShareButton"
 
-export default async function PollViewPage({ params }: { params: { id: string } }) {
+export default async function PollViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   
   const poll = await prisma.poll.findUnique({
