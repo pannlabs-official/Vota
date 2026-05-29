@@ -204,7 +204,7 @@ export default function CreatePollPage() {
                     <div className="flex-1">
                       <DatePicker
                         selected={constraint.start}
-                        onChange={(date) => updateDayTime(day.value, "start", date)}
+                        onChange={(date: Date | null) => updateDayTime(day.value, "start", date)}
                         showTimeSelect
                         showTimeSelectOnly
                         timeIntervals={30}
@@ -217,7 +217,7 @@ export default function CreatePollPage() {
                     <div className="flex-1">
                       <DatePicker
                         selected={constraint.end}
-                        onChange={(date) => updateDayTime(day.value, "end", date)}
+                        onChange={(date: Date | null) => updateDayTime(day.value, "end", date)}
                         showTimeSelect
                         showTimeSelectOnly
                         timeIntervals={30}
@@ -237,7 +237,7 @@ export default function CreatePollPage() {
             <label className="text-sm font-medium leading-none mb-2 block">Voting Deadline</label>
             <DatePicker
               selected={deadline}
-              onChange={(date) => setDeadline(date)}
+              onChange={(date: Date | null) => setDeadline(date)}
               showTimeSelect
               timeFormat="h:mm aa"
               timeIntervals={15}
