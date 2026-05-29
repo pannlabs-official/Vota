@@ -17,40 +17,38 @@ export default function PollTabs({ poll, isCreator, votes, participants }: PollT
 
   return (
     <div className="space-y-6">
-      {isCreator && (
-        <div className="flex justify-center mb-8 fade-in-up">
-          <div className="bg-secondary/50 p-1 rounded-xl inline-flex shadow-sm border border-border">
-            <button
-              onClick={() => setActiveTab("VOTE")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "VOTE"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              }`}
-            >
-              <CheckSquare className="h-4 w-4" />
-              Vote
-            </button>
-            <button
-              onClick={() => setActiveTab("RESULTS")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "RESULTS"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Results
-            </button>
-          </div>
+      <div className="flex justify-center mb-8 fade-in-up">
+        <div className="bg-secondary/50 p-1 rounded-xl inline-flex shadow-sm border border-border">
+          <button
+            onClick={() => setActiveTab("VOTE")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "VOTE"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+            }`}
+          >
+            <CheckSquare className="h-4 w-4" />
+            Vote
+          </button>
+          <button
+            onClick={() => setActiveTab("RESULTS")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "RESULTS"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Results
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="mt-6">
         {activeTab === "VOTE" ? (
           <VotingGrid poll={poll} />
         ) : (
-          <ResultsDashboard poll={poll} votes={votes} participants={participants} />
+          <ResultsDashboard poll={poll} votes={votes} participants={participants} isCreator={isCreator} />
         )}
       </div>
     </div>

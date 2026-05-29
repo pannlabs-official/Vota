@@ -9,9 +9,10 @@ type ResultsDashboardProps = {
   poll: any
   votes: any[]
   participants: any[]
+  isCreator: boolean
 }
 
-export default function ResultsDashboard({ poll, votes, participants }: ResultsDashboardProps) {
+export default function ResultsDashboard({ poll, votes, participants, isCreator }: ResultsDashboardProps) {
   const [selectedFinalTime, setSelectedFinalTime] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -37,6 +38,23 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
     }
   }
 
+  // Calculate top class times
+  const timeCounts = votes.reduce((acc, vote) => {
+    const timeStr = new Date(vote.startTime).getTime().toString()
+    acc[timeStr] = (acc[timeStr] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const sortedTimes = Object.entries(timeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([timeStr, count]) => ({
+      time: new Date(Number(timeStr)),
+      count
+    }))
+    
+  const maxCount = sortedTimes.length > 0 ? sortedTimes[0].count : 0
+  const topTimes = sortedTimes.slice(0, 5)
+
   return (
     <div className="space-y-8 fade-in-up">
       {/* Overview Stats */}
@@ -60,6 +78,49 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
             <h3 className="text-2xl font-bold">{votes.length} blocks</h3>
           </div>
         </div>
+      </div>
+
+      {/* Top Voted Times (Bar Chart) */}
+      <div className="glass-card rounded-2xl p-6 shadow-sm border border-border bg-gradient-to-br from-background to-secondary/10">
+        <div className="mb-6 pb-4 border-b border-border">
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">
+            Top Voted Times
+          </h2>
+          <div className="text-sm text-muted-foreground mt-1">
+            The most popular class times across all participants.
+          </div>
+        </div>
+
+        {topTimes.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No votes cast yet.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {topTimes.map((item, index) => {
+              const percentage = Math.max(5, Math.round((item.count / maxCount) * 100))
+              const isWinner = index === 0
+              return (
+                <div key={item.time.getTime()} className="group relative">
+                  <div className="flex justify-between items-end mb-1">
+                    <span className={`font-medium ${isWinner ? 'text-primary font-bold' : 'text-foreground'}`}>
+                      {item.time.toLocaleDateString([], { weekday: 'short' })} {item.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      {item.count} {item.count === 1 ? 'vote' : 'votes'}
+                    </span>
+                  </div>
+                  <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isWinner ? 'bg-gradient-to-r from-primary to-blue-500' : 'bg-primary/40'}`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Main Results View */}
@@ -100,17 +161,16 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {participants.map((p) => {
               const participantVotes = votes.filter(v => v.participantId === p.id)
-              // Sort votes by start time
               participantVotes.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
               
               return (
-                <div key={p.id} className="bg-background/50 rounded-xl p-4 border border-border flex flex-col">
+                <div key={p.id} className="group bg-background/40 hover:bg-background/80 rounded-xl p-4 border border-border flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/30">
                   <div className="flex items-center gap-3 border-b border-border/50 pb-3 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center text-primary font-bold shrink-0 transition-transform group-hover:scale-110">
                       {p.name ? p.name.charAt(0).toUpperCase() : p.email.charAt(0).toUpperCase()}
                     </div>
                     <div className="overflow-hidden">
-                      <p className="font-semibold truncate">{p.name || p.email.split('@')[0]}</p>
+                      <p className="font-semibold truncate group-hover:text-primary transition-colors">{p.name || p.email.split('@')[0]}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.email}</p>
                     </div>
                   </div>
@@ -121,7 +181,7 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
                     </p>
                     {participantVotes.length > 0 ? (
                       participantVotes.map(v => (
-                        <div key={v.id} className="text-sm bg-muted/50 rounded px-2 py-1.5 flex items-center justify-between">
+                        <div key={v.id} className="text-sm bg-muted/50 rounded px-2 py-1.5 flex items-center justify-between group-hover:bg-primary/5 transition-colors">
                           <span className="font-medium">{new Date(v.startTime).toLocaleDateString([], { weekday: 'short' })}</span>
                           <span className="text-muted-foreground">{new Date(v.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -138,63 +198,65 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
       </div>
 
       {/* Decision Maker */}
-      <div className={`glass-card rounded-2xl p-6 md:p-8 border-2 ${poll.status === 'FINALIZED' ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'}`}>
-        <div className="flex items-start gap-4">
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${poll.status === 'FINALIZED' ? 'bg-green-500' : 'bg-primary'}`}>
-            <Award className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2">
-              {poll.status === 'FINALIZED' ? 'Meeting Time Finalized' : 'Finalize Meeting Time'}
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {poll.status === 'FINALIZED' 
-                ? 'The official meeting time has been locked in.' 
-                : 'Select a time block from the results above to lock in the official meeting time.'}
-            </p>
-            
-            {(poll.status === 'FINALIZED' && poll.finalTime) ? (
-              <div className="bg-background rounded-xl p-4 border border-green-200 shadow-sm mb-6 flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-green-600 font-medium mb-1">Official Time:</p>
-                  <p className="font-semibold text-lg">
-                    {new Date(JSON.parse(poll.finalTime).startTime).toLocaleString([], { weekday: 'long', hour: '2-digit', minute: '2-digit' })}
-                    {" - "}
-                    {new Date(JSON.parse(poll.finalTime).endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+      {isCreator && (
+        <div className={`glass-card rounded-2xl p-6 md:p-8 border-2 ${poll.status === 'FINALIZED' ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'}`}>
+          <div className="flex items-start gap-4">
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${poll.status === 'FINALIZED' ? 'bg-green-500' : 'bg-primary'}`}>
+              <Award className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">
+                {poll.status === 'FINALIZED' ? 'Meeting Time Finalized' : 'Finalize Meeting Time'}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {poll.status === 'FINALIZED' 
+                  ? 'The official meeting time has been locked in.' 
+                  : 'Select a time block from the results above to lock in the official meeting time.'}
+              </p>
+              
+              {(poll.status === 'FINALIZED' && poll.finalTime) ? (
+                <div className="bg-background rounded-xl p-4 border border-green-200 shadow-sm mb-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-green-600 font-medium mb-1">Official Time:</p>
+                    <p className="font-semibold text-lg">
+                      {new Date(JSON.parse(poll.finalTime).startTime).toLocaleString([], { weekday: 'long', hour: '2-digit', minute: '2-digit' })}
+                      {" - "}
+                      {new Date(JSON.parse(poll.finalTime).endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : selectedFinalTime ? (
-              <div className="bg-background rounded-xl p-4 border border-border shadow-sm mb-6 flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Selected Time:</p>
-                  <p className="font-semibold text-lg">
-                    {new Date(selectedFinalTime.startTime).toLocaleString([], { weekday: 'long', hour: '2-digit', minute: '2-digit' })}
-                    {" - "}
-                    {new Date(selectedFinalTime.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+              ) : selectedFinalTime ? (
+                <div className="bg-background rounded-xl p-4 border border-border shadow-sm mb-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Selected Time:</p>
+                    <p className="font-semibold text-lg">
+                      {new Date(selectedFinalTime.startTime).toLocaleString([], { weekday: 'long', hour: '2-digit', minute: '2-digit' })}
+                      {" - "}
+                      {new Date(selectedFinalTime.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="bg-background/50 rounded-xl p-4 border border-dashed border-border mb-6 text-center text-muted-foreground">
-                Click on a time block above to select it.
-              </div>
-            )}
+              ) : (
+                <div className="bg-background/50 rounded-xl p-4 border border-dashed border-border mb-6 text-center text-muted-foreground">
+                  Click on a time block above to select it.
+                </div>
+              )}
 
-            {poll.status !== 'FINALIZED' && (
-              <button
-                onClick={handleFinalize}
-                disabled={!selectedFinalTime || isSubmitting}
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-primary h-12 px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
-              >
-                {isSubmitting ? "Finalizing..." : (
-                  <>Lock in this time <ArrowRight className="ml-2 h-5 w-5" /></>
-                )}
-              </button>
-            )}
+              {poll.status !== 'FINALIZED' && (
+                <button
+                  onClick={handleFinalize}
+                  disabled={!selectedFinalTime || isSubmitting}
+                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-primary h-12 px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isSubmitting ? "Finalizing..." : (
+                    <>Lock in this time <ArrowRight className="ml-2 h-5 w-5" /></>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
