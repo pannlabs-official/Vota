@@ -79,6 +79,7 @@ model Poll {
 model Participant {
   id        String   @id @default(cuid())
   pollId    String
+  name      String?
   email     String
   hasVoted  Boolean  @default(false)
   createdAt DateTime @default(now())

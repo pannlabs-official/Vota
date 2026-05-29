@@ -83,6 +83,60 @@ export default function ResultsDashboard({ poll, votes, participants }: ResultsD
         />
       </div>
 
+      {/* Voter Details */}
+      <div className="glass-card rounded-2xl p-6 shadow-sm border border-border">
+        <div className="mb-6 pb-4 border-b border-border">
+          <h2 className="text-xl font-bold">Voter Details</h2>
+          <div className="text-sm text-muted-foreground mt-1">
+            Breakdown of selected class times for each participant.
+          </div>
+        </div>
+
+        {participants.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No one has voted yet.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {participants.map((p) => {
+              const participantVotes = votes.filter(v => v.participantId === p.id)
+              // Sort votes by start time
+              participantVotes.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+              
+              return (
+                <div key={p.id} className="bg-background/50 rounded-xl p-4 border border-border flex flex-col">
+                  <div className="flex items-center gap-3 border-b border-border/50 pb-3 mb-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+                      {p.name ? p.name.charAt(0).toUpperCase() : p.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-semibold truncate">{p.name || p.email.split('@')[0]}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                      Selected Times ({participantVotes.length})
+                    </p>
+                    {participantVotes.length > 0 ? (
+                      participantVotes.map(v => (
+                        <div key={v.id} className="text-sm bg-muted/50 rounded px-2 py-1.5 flex items-center justify-between">
+                          <span className="font-medium">{new Date(v.startTime).toLocaleDateString([], { weekday: 'short' })}</span>
+                          <span className="text-muted-foreground">{new Date(v.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">No times selected</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Decision Maker */}
       <div className={`glass-card rounded-2xl p-6 md:p-8 border-2 ${poll.status === 'FINALIZED' ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'}`}>
         <div className="flex items-start gap-4">

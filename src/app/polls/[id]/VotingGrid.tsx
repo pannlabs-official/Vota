@@ -95,10 +95,24 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
   }
 
   const handleToggleSlot = (id: string) => {
+    const dayStr = id.split("-")[0]
+    
     setSelectedSlots(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      
+      if (next.has(id)) {
+        next.delete(id)
+        return next
+      }
+      
+      // Enforce 1 class time per day by removing any other slot for this day
+      for (const selectedId of next) {
+        if (selectedId.startsWith(dayStr + "-")) {
+          next.delete(selectedId)
+        }
+      }
+      
+      next.add(id)
       return next
     })
   }

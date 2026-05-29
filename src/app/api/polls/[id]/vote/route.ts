@@ -37,6 +37,7 @@ export async function POST(
         data: {
           pollId,
           email,
+          name,
           hasVoted: true
         }
       })
@@ -50,7 +51,7 @@ export async function POST(
       
       await prisma.participant.update({
         where: { id: participant.id },
-        data: { hasVoted: true }
+        data: { hasVoted: true, name }
       })
     }
 
