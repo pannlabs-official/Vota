@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
-import { Check, Info } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Check, Info, ChevronDown, ChevronUp, Trash2, Calendar } from "lucide-react"
 
 type Poll = {
   id: string
@@ -36,7 +36,6 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
     }
 
     const blocksByDate: Record<string, TimeBlock[]> = {}
-    // ... rest of the grid generation logic is identical ...
     for (const date of dates) {
       const dateKey = date.toDateString()
       blocksByDate[dateKey] = []
@@ -62,7 +61,7 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
         
         if (slotEnd <= dayEndTime) {
           blocksByDate[dateKey].push({
-            id: dayStr + "-" + formatTime(slotStart), // Use a generic ID instead of ISO date
+            id: dayStr + "-" + formatTime(slotStart), // Use a generic ID
             startTime: slotStart,
             endTime: slotEnd
           })
@@ -80,37 +79,33 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
   const [participantEmail, setParticipantEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  
+  // By default, expand the first day if available
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(
+    new Set(sortedDates.length > 0 ? [sortedDates[0]] : [])
+  )
 
-  const [isDragging, setIsDragging] = useState(false)
-  const [isSelecting, setIsSelecting] = useState(true)
-
-  useEffect(() => {
-    const handleMouseUp = () => setIsDragging(false)
-    window.addEventListener("mouseup", handleMouseUp)
-    return () => window.removeEventListener("mouseup", handleMouseUp)
-  }, [])
-
-  const handleMouseDown = (id: string) => {
-    setIsDragging(true)
-    const currentlySelected = selectedSlots.has(id)
-    setIsSelecting(!currentlySelected) 
-    updateSelection(id, !currentlySelected)
-  }
-
-  const handleMouseEnter = (id: string) => {
-    if (isDragging) {
-      updateSelection(id, isSelecting)
-    }
-  }
-
-  const updateSelection = useCallback((id: string, select: boolean) => {
-    setSelectedSlots(prev => {
+  const toggleDay = (dateStr: string) => {
+    setExpandedDays(prev => {
       const next = new Set(prev)
-      if (select) next.add(id)
-      else next.delete(id)
+      if (next.has(dateStr)) next.delete(dateStr)
+      else next.add(dateStr)
       return next
     })
-  }, [])
+  }
+
+  const handleToggleSlot = (id: string) => {
+    setSelectedSlots(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const clearSelections = () => {
+    setSelectedSlots(new Set())
+  }
 
   function formatTime(date: Date) {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -120,9 +115,7 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // We now just send the raw IDs or generic block times, but let's reconstruct the Date objects for the backend format
     const selectedBlocks = Array.from(selectedSlots).map(id => {
-      // Find the actual block from groupedSlots
       let foundBlock: TimeBlock | null = null
       Object.values(groupedSlots).forEach(slots => {
         const slot = slots.find(s => s.id === id)
@@ -171,55 +164,97 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
 
   return (
     <div className="space-y-8 fade-in-up">
-      <div className="glass-card rounded-2xl overflow-hidden shadow-lg border border-primary/10">
-        <div className="p-4 bg-muted/30 border-b border-border flex items-start gap-2">
-          <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-          <p className="text-sm text-muted-foreground">
-            <strong>Click and drag</strong> across the grid to mark exactly when you are available. The grid matches the specific windows defined for each day.
-          </p>
+      <div className="glass-card rounded-2xl overflow-hidden shadow-sm border border-border">
+        <div className="p-4 bg-muted/30 border-b border-border flex items-start gap-2 justify-between flex-col sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <Info className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <strong>Tap</strong> the time slots that work for you.
+            </p>
+          </div>
+          
+          {selectedSlots.size > 0 && (
+            <button 
+              onClick={clearSelections}
+              className="mt-3 sm:mt-0 inline-flex items-center text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              Clear Selections
+            </button>
+          )}
         </div>
         
-        <div className="overflow-x-auto select-none touch-none">
-          <div className="p-6 flex gap-2 min-w-max items-end">
-            {sortedDates.length === 0 && (
-               <div className="p-4 text-center w-full text-muted-foreground">No valid dates found in the range.</div>
-            )}
+        <div className="p-4 md:p-6 space-y-4">
+          {sortedDates.length === 0 && (
+             <div className="p-4 text-center w-full text-muted-foreground">No valid dates found in the range.</div>
+          )}
+          
+          {sortedDates.map((date) => {
+            const isExpanded = expandedDays.has(date)
+            const daySlots = groupedSlots[date]
+            const selectedInDay = daySlots.filter(s => selectedSlots.has(s.id)).length
             
-            {sortedDates.map((date) => (
-              <div key={date} className="flex-1 min-w-[120px] space-y-1">
-                <div className="text-center pb-4 mb-2 border-b border-border">
-                  <div className="font-semibold text-lg">{new Date(date).toLocaleDateString([], { weekday: 'long' })}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Weekly</div>
-                </div>
+            return (
+              <div key={date} className="border border-border rounded-xl overflow-hidden bg-background/50 transition-all">
+                <button
+                  type="button"
+                  onClick={() => toggleDay(date)}
+                  className="w-full px-4 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <div className="text-left">
+                      <div className="font-semibold">{new Date(date).toLocaleDateString([], { weekday: 'long' })}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Weekly</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    {selectedInDay > 0 && (
+                      <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
+                        {selectedInDay} selected
+                      </span>
+                    )}
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </button>
                 
-                <div className="space-y-[2px]">
-                  {groupedSlots[date].map((slot) => {
-                    const isSelected = selectedSlots.has(slot.id)
-                    return (
-                      <div
-                        key={slot.id}
-                        onMouseDown={() => handleMouseDown(slot.id)}
-                        onMouseEnter={() => handleMouseEnter(slot.id)}
-                        onTouchStart={() => handleMouseDown(slot.id)}
-                        className={`w-full py-2 px-1 text-center text-[11px] font-medium transition-colors cursor-crosshair
-                          ${isSelected 
-                            ? "bg-green-500 hover:bg-green-600 text-white shadow-sm ring-1 ring-green-600" 
-                            : "bg-secondary/50 hover:bg-secondary/80 text-muted-foreground"
-                          }
-                        `}
-                      >
-                        {formatTime(slot.startTime)}
-                      </div>
-                    )
-                  })}
-                </div>
+                {isExpanded && (
+                  <div className="p-4 border-t border-border bg-background/30 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {daySlots.map((slot) => {
+                      const isSelected = selectedSlots.has(slot.id)
+                      return (
+                        <button
+                          key={slot.id}
+                          type="button"
+                          onClick={() => handleToggleSlot(slot.id)}
+                          className={`
+                            py-3 px-2 rounded-lg text-sm font-medium transition-all flex flex-col items-center justify-center
+                            ${isSelected 
+                              ? "bg-green-500 hover:bg-green-600 text-white shadow-md ring-2 ring-green-500 ring-offset-1 ring-offset-background scale-[1.02]" 
+                              : "bg-secondary/60 hover:bg-secondary border border-border/50 text-foreground hover:scale-[1.02]"
+                            }
+                          `}
+                        >
+                          <span>{formatTime(slot.startTime)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 md:p-8 shadow-md border border-primary/10">
+      <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 md:p-8 shadow-sm border border-border">
         <h3 className="text-lg font-semibold mb-6">Confirm Your Availability</h3>
         
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -230,7 +265,7 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
               required
               value={participantName}
               onChange={(e) => setParticipantName(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mt-2"
+              className="flex h-12 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mt-2"
               placeholder="John Doe"
             />
           </div>
@@ -242,7 +277,7 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
               required
               value={participantEmail}
               onChange={(e) => setParticipantEmail(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mt-2"
+              className="flex h-12 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mt-2"
               placeholder="john@example.com"
             />
           </div>
@@ -251,7 +286,7 @@ export default function VotingGrid({ poll }: { poll: Poll }) {
         <button
           type="submit"
           disabled={isSubmitting || selectedSlots.size === 0}
-          className="w-full inline-flex items-center justify-center rounded-lg bg-primary h-12 px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
+          className="w-full inline-flex items-center justify-center rounded-xl bg-primary h-14 px-8 text-lg font-medium text-primary-foreground shadow-lg transition-transform hover:scale-[1.01] hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100"
         >
           {isSubmitting ? "Submitting..." : `Submit Votes (${selectedSlots.size} blocks selected)`}
         </button>
