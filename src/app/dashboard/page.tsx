@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Plus, Calendar, Clock, Users } from "lucide-react"
 import prisma from "@/lib/prisma"
+import ShareButton from "@/components/ShareButton"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -56,29 +57,42 @@ export default async function DashboardPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {polls.map((poll) => (
-            <Link href={`/polls/${poll.id}`} key={poll.id} className="glass-card rounded-xl p-6 flex flex-col space-y-4 hover:border-primary/50 transition-colors cursor-pointer group">
-              <div>
-                <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">{poll.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                  {poll.description || "No description provided."}
-                </p>
+            <div key={poll.id} className="glass-card rounded-xl p-6 flex flex-col space-y-4 hover:border-primary/50 transition-colors group">
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <Link href={`/polls/${poll.id}`} className="font-bold text-lg hover:text-primary transition-colors line-clamp-1 block">
+                    {poll.title}
+                  </Link>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {poll.description || "No description provided."}
+                  </p>
+                </div>
+                <div className="shrink-0 flex flex-col items-end gap-2">
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    poll.status === "ACTIVE" ? "bg-green-100 text-green-700" :
+                    poll.status === "FINALIZED" ? "bg-blue-100 text-blue-700" :
+                    "bg-gray-100 text-gray-700"
+                  }`}>
+                    {poll.status}
+                  </span>
+                </div>
               </div>
               
-              <div className="flex flex-wrap gap-y-2 gap-x-4 text-sm text-muted-foreground pt-4 border-t border-border/50">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(poll.startDate).toLocaleDateString()}</span>
+              <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 pt-4 border-t border-border/50">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>Due {new Date(poll.deadline).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4" />
+                    <span>{poll._count.votes} Votes</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>Due {new Date(poll.deadline).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" />
-                  <span>{poll._count.votes} Votes</span>
-                </div>
+                
+                <ShareButton pollId={poll.id} className="h-8 text-xs px-3" />
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -65,8 +65,10 @@ model Poll {
   deadline            DateTime
   scheduleConstraints String     // JSON string mapping days to specific time blocks
   isAnonymous         Boolean    @default(false)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  status              String     @default("ACTIVE") // ACTIVE, CLOSED, FINALIZED
+  finalTime           String?    // The JSON or ID of the selected final time block
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
   creator        User       @relation("UserPolls", fields: [creatorId], references: [id], onDelete: Cascade)
   participants   Participant[]
