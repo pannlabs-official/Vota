@@ -60,6 +60,7 @@ model VerificationToken {
 
 model Poll {
   id                  String     @id @default(cuid())
+  slug                String     @unique @default(cuid())
   title               String
   description         String?
   creatorId           String

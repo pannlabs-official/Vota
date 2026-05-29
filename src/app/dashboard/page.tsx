@@ -60,7 +60,7 @@ export default async function DashboardPage() {
             <div key={poll.id} className="glass-card rounded-xl p-6 flex flex-col space-y-4 hover:border-primary/50 transition-colors group">
               <div className="flex justify-between items-start gap-4">
                 <div>
-                  <Link href={`/polls/${poll.id}`} className="font-bold text-lg hover:text-primary transition-colors line-clamp-1 block">
+                  <Link href={`/polls/${poll.slug}`} className="font-bold text-lg hover:text-primary transition-colors line-clamp-1 block">
                     {poll.title}
                   </Link>
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 
-                <ShareButton pollId={poll.id} className="h-8 text-xs px-3" />
+                <ShareButton pollId={poll.slug} className="h-8 text-xs px-3" />
               </div>
             </div>
           ))}

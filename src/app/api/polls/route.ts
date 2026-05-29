@@ -23,9 +23,21 @@ export async function POST(req: Request) {
       )
     }
 
+    // Generate unique slug
+    let baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    if (!baseSlug) baseSlug = 'poll'
+    
+    let slug = baseSlug
+    let counter = 1
+    while (await prisma.poll.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`
+      counter++
+    }
+
     // Create the poll
     const poll = await prisma.poll.create({
       data: {
+        slug,
         title,
         description,
         deadline: new Date(deadline),
@@ -35,7 +47,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(
-      { message: "Poll created successfully", pollId: poll.id },
+      { message: "Poll created successfully", pollId: poll.slug },
       { status: 201 }
     )
   } catch (error) {
