@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -31,7 +32,18 @@ export default function RegisterPage() {
         throw new Error(data.error || "Something went wrong")
       }
 
-      router.push("/login")
+      const signInRes = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      })
+
+      if (signInRes?.error) {
+        router.push("/login")
+      } else {
+        router.push("/dashboard")
+        router.refresh()
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
