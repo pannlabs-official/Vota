@@ -82,9 +82,13 @@ export default async function DashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 pt-4 border-t border-border/50">
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   <DeadlineEditor pollId={poll.id} currentDeadline={poll.deadline} />
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5" title="People who voted">
                     <Users className="h-4 w-4" />
-                    <span>{poll._count.votes} Votes</span>
+                    <span>{poll._count.participants} People</span>
+                  </div>
+                  <div className="flex items-center gap-1.5" title="Total time blocks selected">
+                    <Calendar className="h-4 w-4" />
+                    <span>{poll._count.votes} Blocks</span>
                   </div>
                 </div>
                 

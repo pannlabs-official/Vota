@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { auth } from "@/auth"
+import { auth, signOut } from "@/auth"
 import { LogOut } from "lucide-react"
 
 export default async function Navbar() {
@@ -18,7 +18,10 @@ export default async function Navbar() {
               <Link href="/dashboard" className="transition-colors hover:text-primary">
                 Dashboard
               </Link>
-              <form action="/api/auth/signout" method="POST">
+              <form action={async () => {
+                "use server"
+                await signOut({ redirectTo: "/" })
+              }}>
                 <button type="submit" className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-secondary-foreground transition-all hover:bg-secondary/80">
                   <LogOut className="h-4 w-4" />
                   <span>Log out</span>

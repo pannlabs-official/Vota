@@ -178,7 +178,7 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
               Hover over blocks to see who voted.
             </div>
           </div>
-          <ShareButton pollId={poll.slug} />
+          <ShareButton pollId={poll.slug} urlSuffix="?tab=RESULTS" label="Share Results" />
         </div>
 
         <AdvancedHeatmap 

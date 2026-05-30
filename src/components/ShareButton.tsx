@@ -6,15 +6,17 @@ import { Share2, Check } from "lucide-react"
 type ShareButtonProps = {
   pollId: string
   className?: string
+  urlSuffix?: string
+  label?: string
 }
 
-export default function ShareButton({ pollId, className = "" }: ShareButtonProps) {
+export default function ShareButton({ pollId, className = "", urlSuffix = "", label = "Share Poll" }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    const url = `${window.location.origin}/polls/${pollId}`
+    const url = `${window.location.origin}/polls/${pollId}${urlSuffix}`
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -37,7 +39,7 @@ export default function ShareButton({ pollId, className = "" }: ShareButtonProps
       ) : (
         <>
           <Share2 className="mr-2 h-4 w-4" />
-          Share Poll
+          {label}
         </>
       )}
     </button>

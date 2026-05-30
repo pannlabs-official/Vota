@@ -5,6 +5,8 @@ import { BarChart3, CheckSquare } from "lucide-react"
 import VotingGrid from "./VotingGrid"
 import ResultsDashboard from "./ResultsDashboard"
 
+import { useSearchParams } from "next/navigation"
+
 type PollTabsProps = {
   poll: any
   isCreator: boolean
@@ -13,7 +15,9 @@ type PollTabsProps = {
 }
 
 export default function PollTabs({ poll, isCreator, votes: initialVotes, participants: initialParticipants }: PollTabsProps) {
-  const [activeTab, setActiveTab] = useState<"VOTE" | "RESULTS">("VOTE")
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get("tab") === "RESULTS" ? "RESULTS" : "VOTE"
+  const [activeTab, setActiveTab] = useState<"VOTE" | "RESULTS">(initialTab)
   const [votes, setVotes] = useState(initialVotes)
   const [participants, setParticipants] = useState(initialParticipants)
 
