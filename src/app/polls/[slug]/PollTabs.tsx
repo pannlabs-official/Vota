@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { BarChart3, CheckSquare } from "lucide-react"
 import VotingGrid from "./VotingGrid"
 import ResultsDashboard from "./ResultsDashboard"
@@ -12,8 +12,28 @@ type PollTabsProps = {
   participants: any[]
 }
 
-export default function PollTabs({ poll, isCreator, votes, participants }: PollTabsProps) {
+export default function PollTabs({ poll, isCreator, votes: initialVotes, participants: initialParticipants }: PollTabsProps) {
   const [activeTab, setActiveTab] = useState<"VOTE" | "RESULTS">("VOTE")
+  const [votes, setVotes] = useState(initialVotes)
+  const [participants, setParticipants] = useState(initialParticipants)
+
+  useEffect(() => {
+    // Silent background sync every 10 seconds
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/polls/${poll.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setVotes(data.votes)
+          setParticipants(data.participants)
+        }
+      } catch (err) {
+        console.error("Failed to sync votes in background")
+      }
+    }, 10000)
+    
+    return () => clearInterval(interval)
+  }, [poll.id])
 
   return (
     <div className="space-y-6">

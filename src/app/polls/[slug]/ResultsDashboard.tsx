@@ -15,6 +15,8 @@ type ResultsDashboardProps = {
 export default function ResultsDashboard({ poll, votes, participants, isCreator }: ResultsDashboardProps) {
   const [selectedFinalTime, setSelectedFinalTime] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [sortOrder, setSortOrder] = useState<"top" | "bottom">("top")
+  const [limit, setLimit] = useState<number>(3)
 
   const handleFinalize = async () => {
     if (!selectedFinalTime) return
@@ -80,45 +82,89 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
         </div>
       </div>
 
-      {/* Top Voted Times (Bar Chart) */}
+      {/* Top/Bottom Column Chart */}
       <div className="glass-card rounded-2xl p-6 shadow-sm border border-border bg-gradient-to-br from-background to-secondary/10">
-        <div className="mb-6 pb-4 border-b border-border">
-          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">
-            Top Voted Times
-          </h2>
-          <div className="text-sm text-muted-foreground mt-1">
-            The most popular class times across all participants.
+        <div className="mb-6 pb-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">
+              Vote Leaderboard
+            </h2>
+            <div className="text-sm text-muted-foreground mt-1">
+              Class time popularity ranking.
+            </div>
           </div>
+          
+          {/* Slicer Controls */}
+          {sortedTimes.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 bg-background/50 p-1.5 rounded-lg border border-border/50 shadow-sm">
+              <div className="flex rounded-md overflow-hidden border border-border/50">
+                <button 
+                  onClick={() => setSortOrder("top")}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${sortOrder === 'top' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted text-muted-foreground'}`}
+                >
+                  Top
+                </button>
+                <button 
+                  onClick={() => setSortOrder("bottom")}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${sortOrder === 'bottom' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted text-muted-foreground'}`}
+                >
+                  Bottom
+                </button>
+              </div>
+              
+              <div className="w-px h-6 bg-border mx-1 hidden sm:block"></div>
+              
+              <div className="flex rounded-md overflow-hidden border border-border/50">
+                {[3, 5, -1].map((n) => (
+                  <button 
+                    key={n}
+                    onClick={() => setLimit(n)}
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l first:border-l-0 border-border/50 ${limit === n ? 'bg-secondary text-foreground' : 'bg-background hover:bg-muted text-muted-foreground'}`}
+                  >
+                    {n === -1 ? 'All' : n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {topTimes.length === 0 ? (
+        {sortedTimes.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No votes cast yet.
           </div>
         ) : (
-          <div className="space-y-4">
-            {topTimes.map((item, index) => {
-              const percentage = Math.max(5, Math.round((item.count / maxCount) * 100))
-              const isWinner = index === 0
-              return (
-                <div key={item.time.getTime()} className="group relative">
-                  <div className="flex justify-between items-end mb-1">
-                    <span className={`font-medium ${isWinner ? 'text-primary font-bold' : 'text-foreground'}`}>
-                      {item.time.toLocaleDateString([], { weekday: 'short' })} {item.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <span className="text-sm text-muted-foreground font-medium">
+          <div className="mt-8 flex items-end justify-between h-48 gap-2 overflow-x-auto pb-2">
+            {(() => {
+              let displayTimes = [...sortedTimes]
+              if (sortOrder === 'bottom') displayTimes.reverse()
+              if (limit !== -1) displayTimes = displayTimes.slice(0, limit)
+              
+              const absoluteMaxCount = sortedTimes[0].count
+              
+              return displayTimes.map((item, index) => {
+                const percentage = Math.max(8, Math.round((item.count / absoluteMaxCount) * 100))
+                const isWinner = sortOrder === 'top' && index === 0
+                
+                return (
+                  <div key={item.time.getTime()} className="group relative flex flex-col items-center flex-1 min-w-[60px] justify-end h-full">
+                    <span className={`text-sm font-bold mb-2 transition-colors ${isWinner ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>
                       {item.count} {item.count === 1 ? 'vote' : 'votes'}
                     </span>
+                    <div className="w-full max-w-[60px] bg-secondary rounded-t-lg overflow-hidden relative" style={{ height: `${percentage}%` }}>
+                      <div 
+                        className={`absolute bottom-0 w-full rounded-t-lg transition-all duration-1000 ease-out h-full ${isWinner ? 'bg-gradient-to-t from-primary to-blue-500' : 'bg-primary/40 group-hover:bg-primary/60'}`} 
+                      />
+                    </div>
+                    <div className="mt-3 text-xs text-center text-muted-foreground leading-tight h-8 whitespace-nowrap">
+                      <span className="font-medium text-foreground">{item.time.toLocaleDateString([], { weekday: 'short' })}</span>
+                      <br/>
+                      {item.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isWinner ? 'bg-gradient-to-r from-primary to-blue-500' : 'bg-primary/40'}`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            })()}
           </div>
         )}
       </div>
@@ -181,9 +227,14 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
                     </p>
                     {participantVotes.length > 0 ? (
                       participantVotes.map(v => (
-                        <div key={v.id} className="text-sm bg-muted/50 rounded px-2 py-1.5 flex items-center justify-between group-hover:bg-primary/5 transition-colors">
-                          <span className="font-medium">{new Date(v.startTime).toLocaleDateString([], { weekday: 'short' })}</span>
-                          <span className="text-muted-foreground">{new Date(v.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div key={v.id} className="text-sm bg-muted/50 rounded px-2 py-1.5 flex flex-col group-hover:bg-primary/5 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{new Date(v.startTime).toLocaleDateString([], { weekday: 'short' })}</span>
+                            <span className="font-semibold">{new Date(v.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground mt-1 border-t border-border/50 pt-1">
+                            Voted: {new Date(v.createdAt).toLocaleDateString()} {new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
                       ))
                     ) : (

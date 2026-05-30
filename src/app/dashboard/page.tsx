@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Plus, Calendar, Clock, Users } from "lucide-react"
 import prisma from "@/lib/prisma"
 import ShareButton from "@/components/ShareButton"
+import DeadlineEditor from "./DeadlineEditor"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -80,10 +81,7 @@ export default async function DashboardPage() {
               
               <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 pt-4 border-t border-border/50">
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    <span>Due {new Date(poll.deadline).toLocaleDateString()}</span>
-                  </div>
+                  <DeadlineEditor pollId={poll.id} currentDeadline={poll.deadline} />
                   <div className="flex items-center gap-1.5">
                     <Users className="h-4 w-4" />
                     <span>{poll._count.votes} Votes</span>
