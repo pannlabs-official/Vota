@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { title, description, deadline, scheduleConstraints } = body
+    const { title, description, deadline, scheduleConstraints, isAnonymous = false } = body
 
     if (!title || !deadline || !scheduleConstraints) {
       return NextResponse.json(
@@ -23,26 +23,34 @@ export async function POST(req: Request) {
       )
     }
 
-    // Generate unique slug
-    let baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-    if (!baseSlug) baseSlug = 'poll'
-    
+    // Generate a unique slug from title
+    const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
     let slug = baseSlug
     let counter = 1
+    
     while (await prisma.poll.findUnique({ where: { slug } })) {
       slug = `${baseSlug}-${counter}`
       counter++
     }
 
-    // Create the poll
+    // Generate a secure 6-character PIN for results access
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let resultsPassword = ''
+    for (let i = 0; i < 6; i++) {
+      resultsPassword += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+
+    // Create poll
     const poll = await prisma.poll.create({
       data: {
-        slug,
         title,
         description,
+        creatorId: session.user.id,
         deadline: new Date(deadline),
-        scheduleConstraints,
-        creatorId: session.user.id
+        scheduleConstraints: JSON.stringify(scheduleConstraints),
+        isAnonymous,
+        slug,
+        resultsPassword
       }
     })
 

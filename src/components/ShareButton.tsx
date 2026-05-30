@@ -8,17 +8,24 @@ type ShareButtonProps = {
   className?: string
   urlSuffix?: string
   label?: string
+  pin?: string
 }
 
-export default function ShareButton({ pollId, className = "", urlSuffix = "", label = "Share Poll" }: ShareButtonProps) {
+export default function ShareButton({ pollId, className = "", urlSuffix = "", label = "Share Poll", pin }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     const url = `${window.location.origin}/polls/${pollId}${urlSuffix}`
+    
+    let shareText = url
+    if (pin) {
+      shareText = `View our poll results here:\n${url}\n\nAccess PIN: ${pin}`
+    }
+
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(shareText)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {

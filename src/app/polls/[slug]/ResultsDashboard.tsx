@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Users, CalendarCheck, ArrowRight, Award } from "lucide-react"
+import { Users, CalendarCheck, ArrowRight, Award, Lock } from "lucide-react"
 import AdvancedHeatmap from "./AdvancedHeatmap"
 import ShareButton from "@/components/ShareButton"
 
@@ -17,6 +17,74 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sortOrder, setSortOrder] = useState<"top" | "bottom">("top")
   const [limit, setLimit] = useState<number>(3)
+  
+  // Secure Access State
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [passwordInput, setPasswordInput] = useState("")
+  const [isUnlocking, setIsUnlocking] = useState(false)
+  const [unlockError, setUnlockError] = useState("")
+
+  const needsPassword = !isCreator && !!poll.resultsPassword && !isUnlocked
+  const hasFullAccess = isCreator || isUnlocked
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsUnlocking(true)
+    setUnlockError("")
+    try {
+      const res = await fetch(`/api/polls/${poll.id}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: passwordInput })
+      })
+      if (res.ok) {
+        setIsUnlocked(true)
+      } else {
+        setUnlockError("Incorrect PIN. Please try again.")
+      }
+    } catch (err) {
+      setUnlockError("An error occurred.")
+    } finally {
+      setIsUnlocking(false)
+    }
+  }
+
+  if (needsPassword) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 fade-in-up">
+        <div className="glass-card max-w-md w-full p-8 rounded-2xl border-2 border-primary/20 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
+            <Lock className="h-8 w-8" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Results are Locked</h2>
+          <p className="text-muted-foreground mb-8">
+            Please enter the secure PIN to view the results and manage the final meeting time.
+          </p>
+          <form onSubmit={handleUnlock} className="space-y-4">
+            <div>
+              <input
+                type="text"
+                placeholder="Enter PIN"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value.toUpperCase())}
+                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-center text-xl font-bold tracking-widest uppercase ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                maxLength={6}
+                required
+              />
+              {unlockError && <p className="text-red-500 text-sm mt-2 font-medium">{unlockError}</p>}
+            </div>
+            <button
+              type="submit"
+              disabled={isUnlocking || passwordInput.length < 3}
+              className="w-full inline-flex items-center justify-center rounded-md bg-primary h-12 px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isUnlocking ? "Verifying..." : "Unlock Dashboard"}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 
   const handleFinalize = async () => {
     if (!selectedFinalTime) return
@@ -178,7 +246,12 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
               Hover over blocks to see who voted.
             </div>
           </div>
-          <ShareButton pollId={poll.slug} urlSuffix="?tab=RESULTS" label="Share Results" />
+          <ShareButton 
+            pollId={poll.slug} 
+            urlSuffix="?tab=RESULTS" 
+            label="Share Results" 
+            pin={isCreator ? poll.resultsPassword : undefined}
+          />
         </div>
 
         <AdvancedHeatmap 
@@ -249,7 +322,7 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
       </div>
 
       {/* Decision Maker */}
-      {isCreator && (
+      {hasFullAccess && (
         <div className={`glass-card rounded-2xl p-6 md:p-8 border-2 ${poll.status === 'FINALIZED' ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'}`}>
           <div className="flex items-start gap-4">
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${poll.status === 'FINALIZED' ? 'bg-green-500' : 'bg-primary'}`}>

@@ -69,6 +69,7 @@ model Poll {
   isAnonymous         Boolean    @default(false)
   status              String     @default("ACTIVE") // ACTIVE, CLOSED, FINALIZED
   finalTime           String?    // The JSON or ID of the selected final time block
+  resultsPassword     String?    // Custom secure PIN for sharing results
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 
