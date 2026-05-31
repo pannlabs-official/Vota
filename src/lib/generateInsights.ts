@@ -31,17 +31,24 @@ export function generateInsights(votes: any[], participants: any[]): string[] {
     insights.push(`There is a ${topTimes.length}-way tie for the most popular time, each with ${maxVotes} votes (${consensusPercentage}% consensus).`)
   }
 
-  // 2. Day popularity
+  // 2. Day popularity & Voted Days list
   const dayCounts: Record<string, number> = {}
   votes.forEach(v => {
     const dayStr = new Date(v.startTime).toLocaleDateString([], { weekday: 'long' })
     dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1
   })
+  
   const sortedDays = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])
-  if (sortedDays.length > 1) {
-    const bestDay = sortedDays[0][0]
-    const dayPercentage = Math.round((sortedDays[0][1] / votes.length) * 100)
-    insights.push(`${bestDay}s are the most popular day overall, receiving ${dayPercentage}% of all votes cast.`)
+  
+  if (sortedDays.length > 0) {
+    const votedDaysList = sortedDays.map(d => d[0]).join(', ').replace(/, ([^,]*)$/, ' and $1')
+    insights.push(`Participants have placed votes across ${sortedDays.length} different days: ${votedDaysList}.`)
+    
+    if (sortedDays.length > 1) {
+      const bestDay = sortedDays[0][0]
+      const dayPercentage = Math.round((sortedDays[0][1] / votes.length) * 100)
+      insights.push(`${bestDay} is the most active day overall, receiving ${dayPercentage}% of all votes cast.`)
+    }
   }
 
   // 3. Time of day preference (Morning < 12, Afternoon 12-17, Evening > 17)
@@ -60,11 +67,11 @@ export function generateInsights(votes: any[], participants: any[]): string[] {
   ].sort((a, b) => b.count - a.count)
 
   if (timeOfDayCounts[0].count > votes.length * 0.5) {
-    insights.push(`Participants heavily prefer ${timeOfDayCounts[0].name} slots over other times of day.`)
+    insights.push(`There is a strong preference for ${timeOfDayCounts[0].name} slots over other times of day.`)
   } else if (timeOfDayCounts[0].count > 0 && timeOfDayCounts[1].count > 0 && timeOfDayCounts[0].count === timeOfDayCounts[1].count) {
     insights.push(`There's an even split in preference between ${timeOfDayCounts[0].name} and ${timeOfDayCounts[1].name} slots.`)
   } else {
-    insights.push(`Votes are fairly spread out, but ${timeOfDayCounts[0].name} slots have a slight edge.`)
+    insights.push(`Votes are spread out across the day, but ${timeOfDayCounts[0].name} slots have a slight edge.`)
   }
 
   // 4. General participation

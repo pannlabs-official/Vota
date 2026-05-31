@@ -14,8 +14,8 @@ export default function InsightsCard({ insights }: { insights: string[] }) {
           <Lightbulb className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-foreground">AI Voting Insights</h2>
-          <p className="text-xs text-muted-foreground">Automated summary of your poll data</p>
+          <h2 className="text-lg font-bold text-foreground">Auto Insights</h2>
+          <p className="text-xs text-muted-foreground">Automated summary of the voting data</p>
         </div>
       </div>
       
