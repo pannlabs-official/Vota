@@ -12,6 +12,9 @@ type ResultsDashboardProps = {
   isCreator: boolean
 }
 
+import { generateInsights } from "@/lib/generateInsights"
+import InsightsCard from "@/components/InsightsCard"
+
 export default function ResultsDashboard({ poll, votes, participants, isCreator }: ResultsDashboardProps) {
   const [selectedFinalTime, setSelectedFinalTime] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -26,6 +29,8 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
 
   const needsPassword = !isCreator && !!poll.resultsPassword && !isUnlocked
   const hasFullAccess = isCreator || isUnlocked
+
+  const insights = generateInsights(votes, participants)
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,24 +133,46 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
   return (
     <div className="space-y-8 fade-in-up">
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            <Users className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Participants</p>
-            <h3 className="text-2xl font-bold">{participants.length}</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <InsightsCard insights={insights} />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Participants</p>
+                <h3 className="text-2xl font-bold">{participants.length}</h3>
+              </div>
+            </div>
+            
+            <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                <CalendarCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Votes Cast</p>
+                <h3 className="text-2xl font-bold">{votes.length} blocks</h3>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-            <CalendarCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Votes Cast</p>
-            <h3 className="text-2xl font-bold">{votes.length} blocks</h3>
+
+        {/* Action Panel */}
+        <div className="glass-card rounded-2xl p-6 flex flex-col justify-center gap-4 bg-gradient-to-br from-background to-muted/50 border-border">
+          <h3 className="font-bold text-lg mb-2 text-center">Share Data</h3>
+          
+          <ShareButton 
+            pollId={poll.slug} 
+            urlSuffix="/report" 
+            label="Share Public Report (No PIN)" 
+            className="w-full justify-center bg-background border border-primary text-primary hover:bg-primary/5"
+          />
+          
+          <div className="text-xs text-center text-muted-foreground mt-2">
+            The Public Report safely hides voter emails and Finalize controls.
           </div>
         </div>
       </div>
