@@ -30,8 +30,6 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
   const needsPassword = !isCreator && !!poll.resultsPassword && !isUnlocked
   const hasFullAccess = isCreator || isUnlocked
 
-  const insights = generateInsights(votes, participants)
-
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsUnlocking(true)
@@ -135,7 +133,7 @@ export default function ResultsDashboard({ poll, votes, participants, isCreator 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <InsightsCard insights={insights} />
+          <InsightsCard votes={votes} participants={participants} />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="glass-card rounded-2xl p-6 flex items-center gap-4">

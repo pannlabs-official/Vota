@@ -1,6 +1,18 @@
-import { Lightbulb, Sparkles } from "lucide-react"
+"use client"
 
-export default function InsightsCard({ insights }: { insights: string[] }) {
+import { Lightbulb, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
+import { generateInsights } from "@/lib/generateInsights"
+
+export default function InsightsCard({ votes, participants }: { votes: any[], participants: any[] }) {
+  const [insights, setInsights] = useState<string[]>([])
+  
+  useEffect(() => {
+    if (votes && participants) {
+      setInsights(generateInsights(votes, participants))
+    }
+  }, [votes, participants])
+
   if (!insights || insights.length === 0) return null
 
   return (

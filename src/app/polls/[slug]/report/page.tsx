@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import { Users, CalendarCheck } from "lucide-react"
-import { generateInsights } from "@/lib/generateInsights"
 import InsightsCard from "@/components/InsightsCard"
 import ReportClientView from "./ReportClientView"
 
@@ -28,8 +27,6 @@ export default async function PublicReportPage({ params }: { params: Promise<{ s
     notFound()
   }
 
-  const insights = generateInsights(poll.votes, poll.participants)
-
   return (
     <div className="container mx-auto max-w-5xl p-4 pt-12 space-y-8 pb-24">
       {/* Header */}
@@ -46,7 +43,7 @@ export default async function PublicReportPage({ params }: { params: Promise<{ s
       <div className="space-y-8 fade-in-up" style={{ animationDelay: "100ms" }}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <InsightsCard insights={insights} />
+            <InsightsCard votes={poll.votes} participants={poll.participants} />
           </div>
           
           <div className="space-y-6 flex flex-col justify-center">

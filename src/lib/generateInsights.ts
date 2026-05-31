@@ -41,8 +41,14 @@ export function generateInsights(votes: any[], participants: any[]): string[] {
   const sortedDays = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])
   
   if (sortedDays.length > 0) {
-    const votedDaysList = sortedDays.map(d => d[0]).join(', ').replace(/, ([^,]*)$/, ' and $1')
-    insights.push(`Participants have placed votes across ${sortedDays.length} different days: ${votedDaysList}.`)
+    const topDays = sortedDays.slice(0, 3)
+    const votedDaysList = topDays.map(d => d[0]).join(', ').replace(/, ([^,]*)$/, ' and $1')
+    
+    if (sortedDays.length <= 3) {
+      insights.push(`Participants have placed votes across ${sortedDays.length} different days: ${votedDaysList}.`)
+    } else {
+      insights.push(`The top 3 most active days for voting are ${votedDaysList}.`)
+    }
     
     if (sortedDays.length > 1) {
       const bestDay = sortedDays[0][0]
